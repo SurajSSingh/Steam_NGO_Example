@@ -162,10 +162,17 @@ namespace Netcode.Transports.Facepunch
         {
             if (LogLevel <= LogLevel.Developer)
                 Debug.Log($"[{nameof(FacepunchTransport)}] - Starting as client.");
-
-            connectionManager = SteamNetworkingSockets.ConnectRelay<ConnectionManager>(targetSteamId);
-            connectionManager.Interface = this;
-            return true;
+            try
+            {
+                connectionManager = SteamNetworkingSockets.ConnectRelay<ConnectionManager>(targetSteamId);
+                connectionManager.Interface = this;
+                return true;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[{nameof(FacepunchTransport)}] - Caught an exeption during attempted join as client: {e}");
+                return false;
+            }
         }
 
         public override bool StartServer()
@@ -173,9 +180,17 @@ namespace Netcode.Transports.Facepunch
             if (LogLevel <= LogLevel.Developer)
                 Debug.Log($"[{nameof(FacepunchTransport)}] - Starting as server.");
 
-            socketManager = SteamNetworkingSockets.CreateRelaySocket<SocketManager>();
-            socketManager.Interface = this;
-            return true;
+            try
+            {
+                socketManager = SteamNetworkingSockets.CreateRelaySocket<SocketManager>();
+                socketManager.Interface = this;
+                return true;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[{nameof(FacepunchTransport)}] - Caught an exeption during attempted server creation: {e}");
+                return false;
+            }
         }
 
         #endregion
