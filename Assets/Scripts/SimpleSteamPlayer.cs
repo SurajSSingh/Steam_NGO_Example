@@ -29,7 +29,7 @@ public class SimpleSteamPlayer : NetworkBehaviour
         {
             Debug.LogError("You are not connected to Steam!");
         }
-        else
+        else if (IsOwner)
         {
             UpdateText();
         }
@@ -37,8 +37,22 @@ public class SimpleSteamPlayer : NetworkBehaviour
 
     public void UpdateText()
     {
-        playerName.text = SteamClient.Name;
+        UpdateNameServerRPC(SteamClient.Name);
     }
+
+    [ServerRpc]
+    public void UpdateNameServerRPC(string name)
+    {
+        UpdateNameClientRpc(name);
+    }
+
+    [ClientRpc]
+    public void UpdateNameClientRpc(string name)
+    {
+        playerName.text = name;
+    }
+
+
 
     private void FixedUpdate()
     {
