@@ -56,6 +56,7 @@ public class LobbyManager : MonoBehaviour
             NetworkManager.Singleton.OnClientConnectedCallback -= ClientEntered;
             NetworkManager.Singleton.OnClientDisconnectCallback -= ClientExited;
             NetworkManager.Singleton.OnServerStarted -= ServerStarted;
+            // SteamNetworkingSockets.OnConnectionStatusChanged -= OnConnectionChange;
         }
     }
 
@@ -99,7 +100,7 @@ public class LobbyManager : MonoBehaviour
         Debug.Log("Trying to leave game.");
         if (NetworkManager.Singleton)
         {
-            if (NetworkManager.Singleton.IsServer)
+            if (currentRoom != null)
             {
 
                 Destroy(currentRoom.gameObject);
@@ -192,7 +193,6 @@ public class LobbyManager : MonoBehaviour
         }
     }
 
-
     private IEnumerator WaitForNetworkManagerSingletonToSubscrible()
     {
         if (hostGame) hostGame.SetActive(false);
@@ -206,6 +206,7 @@ public class LobbyManager : MonoBehaviour
         }
         if (NetworkManager.Singleton)
         {
+            // SteamNetworkingSockets.OnConnectionStatusChanged += OnConnectionChange;
             NetworkManager.Singleton.OnClientConnectedCallback += ClientEntered;
             NetworkManager.Singleton.OnClientDisconnectCallback += ClientExited;
             NetworkManager.Singleton.OnServerStarted += ServerStarted;
@@ -216,5 +217,11 @@ public class LobbyManager : MonoBehaviour
         {
             Debug.LogError("Network Manger Singleton could not be found!");
         }
+    }
+
+    private void OnConnectionChange(Connection connection, ConnectionInfo info)
+    {
+        Debug.Log($"[{nameof(LobbyManager)}: Connection] name = {connection.ConnectionName}, id = {connection.Id}");
+        Debug.Log($"[{nameof(LobbyManager)}: ConnectionInfo] addr = {info.Address}, state = {info.State}, end = {info.EndReason}");
     }
 }

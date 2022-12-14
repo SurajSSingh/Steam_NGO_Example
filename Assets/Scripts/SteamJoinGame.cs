@@ -28,6 +28,7 @@ public class SteamJoinGame : MonoBehaviour
             label.text = $"Try Joining {SteamName}'s Game";
         }
     }
+    public void RunTryJoinGame() => TryJoinGame();
 
     public bool TryJoinGame()
     {
@@ -41,7 +42,7 @@ public class SteamJoinGame : MonoBehaviour
 
         if (NetworkManager.Singleton && NetworkManager.Singleton.StartClient())
         {
-            Debug.Log("Joined {SteamName}'s game!");
+            Debug.Log($"Joined {SteamName}'s game!");
             return true;
         }
         Debug.LogError($"Could not join user {SteamName}!");

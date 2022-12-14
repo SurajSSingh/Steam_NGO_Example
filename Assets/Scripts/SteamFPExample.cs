@@ -10,6 +10,8 @@ public class SteamFPExample : MonoBehaviour
 
     [Header("UI Objects")]
     [SerializeField] TMP_Text usernameText;
+    [SerializeField] TMP_Text userInfoText;
+    [SerializeField] TMP_Text friendText;
 
     void Start()
     {
@@ -46,7 +48,27 @@ public class SteamFPExample : MonoBehaviour
         }
         if (usernameText)
         {
-            usernameText.text = $"Username: {SteamClient.Name} [id={SteamClient.SteamId}]";
+            usernameText.text = $"Username: {SteamClient.Name} [ID={SteamClient.SteamId}]";
+        }
+        if (userInfoText)
+        {
+            userInfoText.text = $@"
+            Logged-In: {SteamClient.IsLoggedOn}
+            Valid User: {SteamClient.IsValid}
+            Current State: {SteamClient.State}
+            Current Level: {SteamUser.SteamLevel}
+
+            ";
+        }
+        if (friendText)
+        {
+            friendText.text = "List of Friends:\n";
+            foreach (var friend in SteamFriends.GetFriends())
+            {
+                friendText.text += $"{friend.Name} [{friend.Id}] - {friend.State} - Level: {friend.SteamLevel}\n";
+                Debug.Log(friend.GameInfo.HasValue ? friend.GameInfo.Value : "none");
+            }
+
         }
     }
 }
