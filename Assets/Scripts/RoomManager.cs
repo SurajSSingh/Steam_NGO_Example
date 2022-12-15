@@ -2,41 +2,110 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class RoomManager : NetworkBehaviour
 {
     [SerializeField] Transform playersInRoomContent;
     [SerializeField] GameObject roomPlayerPrefab;
+    [SerializeField] Button leaveButton;
 
     private List<GameObject> roomPlayers = new();
-    public void InitializeRoom(Transform roomContentParent, GameObject roomPrefab)
+
+    private void OnEnable()
     {
-        playersInRoomContent = roomContentParent;
-        roomPlayerPrefab = roomPrefab;
+        if (leaveButton)
+        {
+            leaveButton.onClick.AddListener(OnClickLeave);
+        }
+    }
+
+
+    private void OnDisable()
+    {
+        if (leaveButton)
+        {
+            leaveButton.onClick.RemoveListener(OnClickLeave);
+        }
     }
 
     public void RefreshPlayersInRoom()
     {
-        Debug.Log("Called Refresh in room");
-        // if (!IsOwner) return;
-        // Debug.Log("Server Refresh");
-        // Clear content
-        roomPlayers.Clear();
-        foreach (Transform rp in playersInRoomContent) roomPlayers.Add(rp.gameObject);
-        roomPlayers.ForEach(roomPlayer => Destroy(roomPlayer));
-
-        if (NetworkManager.Singleton is NetworkManager nm)
+        if (IsHost || IsServer)
         {
-            foreach (var clientId in nm.ConnectedClientsIds)
+            // RefreshPlayersInRoomClientRPC();
+            Debug.Log("Called Refresh in room");
+            foreach (var networkPlayer in NetworkManager.Singleton.ConnectedClientsList)
             {
-                Debug.LogWarning($"Creating name tag for client {clientId}");
-                var playerNameTag = Instantiate(roomPlayerPrefab, playersInRoomContent);
-                if (playerNameTag.GetComponent<NetworkObject>() is NetworkObject roomPlayerObj)
+                if (networkPlayer.PlayerObject)
                 {
-                    roomPlayerObj.Spawn();
+                    networkPlayer.PlayerObject.TrySetParent(playersInRoomContent);
                 }
-                roomPlayers.Add(playerNameTag);
             }
+            // if (playersInRoomContent == null)
+            // {
+            //     playersInRoomContent = GameObject.FindGameObjectWithTag("PlayerList").transform;
+            // }
+            // // Clear content
+            // roomPlayers.Clear();
+            // foreach (Transform rp in playersInRoomContent) roomPlayers.Add(rp.gameObject);
+            // roomPlayers.ForEach(roomPlayer => Destroy(roomPlayer));
+
+            // if (NetworkManager)
+            // {
+            //     foreach (var clientId in NetworkManager.ConnectedClientsIds)
+            //     {
+            //         Debug.LogWarning($"Creating name tag for client {clientId}");
+            //         var playerNameTag = Instantiate(roomPlayerPrefab, playersInRoomContent);
+            //         if (playerNameTag.GetComponent<NetworkObject>() is NetworkObject roomPlayerObj)
+            //         {
+
+            //             roomPlayerObj.TrySetParent(playersInRoomContent);
+            //             roomPlayerObj.SpawnWithOwnership(clientId);
+            //         }
+            //         roomPlayers.Add(playerNameTag);
+            //     }
+            // }
+        }
+    }
+
+    // [ClientRpc]
+    // public void RefreshPlayersInRoomClientRPC()
+    // {
+    //     Debug.Log("Called Refresh in room");
+    //     if (playersInRoomContent == null)
+    //     {
+    //         playersInRoomContent = GameObject.FindGameObjectWithTag("PlayerList").transform;
+    //     }
+    //     // Clear content
+    //     roomPlayers.Clear();
+    //     foreach (Transform rp in playersInRoomContent) roomPlayers.Add(rp.gameObject);
+    //     roomPlayers.ForEach(roomPlayer => Destroy(roomPlayer));
+
+    //     if (NetworkManager.Singleton is NetworkManager nm)
+    //     {
+    //         foreach (var clientId in nm.ConnectedClientsIds)
+    //         {
+    //             Debug.LogWarning($"Creating name tag for client {clientId}");
+    //             var playerNameTag = Instantiate(roomPlayerPrefab, playersInRoomContent);
+    //             if (playerNameTag.GetComponent<NetworkObject>() is NetworkObject roomPlayerObj)
+    //             {
+    //                 roomPlayerObj.SpawnWithOwnership(clientId, true);
+    //             }
+    //             roomPlayers.Add(playerNameTag);
+    //         }
+    //     }
+    // }
+
+    public void OnClickLeave()
+    {
+        if (FindObjectOfType<LobbyManager>() is LobbyManager lobby)
+        {
+            lobby.LeaveGame();
+        }
+        else
+        {
+            NetworkManager.Shutdown();
         }
     }
 }

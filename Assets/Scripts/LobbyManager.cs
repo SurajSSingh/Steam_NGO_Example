@@ -20,21 +20,19 @@ public class LobbyManager : MonoBehaviour
     private const int WAIT_TIMEOUT = 60;
     [Header("Lobby Screens")]
     [SerializeField] GameObject generalLobbyScreen;
-    [SerializeField] GameObject createNewLobbyScreen;
-    [SerializeField] GameObject roomScreen;
-
+    // [SerializeField] GameObject createNewLobbyScreen;
+    // [SerializeField] GameObject roomScreen;
+    [SerializeField] private RoomManager currentRoom;
     [Header("Scroll Content")]
     [SerializeField] Transform joinableRoomsContent;
-    [SerializeField] Transform playersInRoomContent;
     [Header("Prefabs Content")]
     [SerializeField] GameObject joinGamePrefab;
-    [SerializeField] GameObject roomPlayerPrefab;
+    [SerializeField] GameObject roomManagerPrefab;
 
     [Header("Other UI")]
     [SerializeField] GameObject hostGame;
-    [SerializeField] GameObject readyButton;
+    // [SerializeField] GameObject readyButton;
     private LobbyState currentLobbyState = LobbyState.PublicLobby;
-    private RoomManager currentRoom;
 
     private LogLevel LogLevel => NetworkManager.Singleton ? NetworkManager.Singleton.LogLevel : LogLevel.Nothing;
 
@@ -72,8 +70,8 @@ public class LobbyManager : MonoBehaviour
         // NOTE: ?? allowed here as LobbyState is a nullable enum type (don't do this for Unity objects like MonoBehaviour)
         currentLobbyState = newLobby ?? currentLobbyState;
         generalLobbyScreen.SetActive(currentLobbyState == LobbyState.PublicLobby);
-        createNewLobbyScreen.SetActive(currentLobbyState == LobbyState.CreatingNew);
-        roomScreen.SetActive(currentLobbyState == LobbyState.PrivateRoom);
+        // createNewLobbyScreen.SetActive(currentLobbyState == LobbyState.CreatingNew);
+        if (currentRoom) currentRoom.gameObject.SetActive(currentLobbyState == LobbyState.PrivateRoom);
         RunSelectRefresh();
     }
 
@@ -122,7 +120,7 @@ public class LobbyManager : MonoBehaviour
         {
             ShowLobbyScreen(LobbyState.PrivateRoom);
         }
-        else if (currentRoom)
+        else if (NetworkManager.Singleton.IsHost && currentRoom)
         {
             currentRoom.RefreshPlayersInRoom();
         }
@@ -132,10 +130,14 @@ public class LobbyManager : MonoBehaviour
     {
         if (LogLevel <= LogLevel.Normal) Debug.Log("Server has started!");
         // Create a room manager
-        GameObject roomManagerObject = new("Room Manager");
-        roomManagerObject.AddComponent<NetworkObject>().Spawn();
-        currentRoom = roomManagerObject.AddComponent<RoomManager>();
-        currentRoom.InitializeRoom(playersInRoomContent, roomPlayerPrefab);
+        // GameObject roomManagerObject = new("Room Manager");
+        // currentRoom = roomManagerObject.AddComponent<RoomManager>();
+        // roomManagerObject.AddComponent<NetworkObject>().Spawn();
+        // Clone a room manager
+        // GameObject roomManagerObject = Instantiate(roomManagerPrefab);
+        // currentRoom = roomManagerObject.GetComponent<RoomManager>();
+        // roomManagerObject.GetComponent<NetworkObject>().Spawn();
+
         currentRoom.RefreshPlayersInRoom();
         Debug.Log("Created Current Room Manager!");
     }
@@ -148,7 +150,7 @@ public class LobbyManager : MonoBehaviour
         {
             ShowLobbyScreen(LobbyState.PublicLobby);
         }
-        else if (currentRoom)
+        else if (NetworkManager.Singleton.IsHost && currentRoom)
         {
             currentRoom.RefreshPlayersInRoom();
         }
@@ -162,7 +164,7 @@ public class LobbyManager : MonoBehaviour
         {
             RefreshServerList();
         }
-        else if (currentLobbyState == LobbyState.PrivateRoom && currentRoom)
+        else if (currentLobbyState == LobbyState.PrivateRoom && NetworkManager.Singleton.IsHost && currentRoom)
         {
             currentRoom.RefreshPlayersInRoom();
         }

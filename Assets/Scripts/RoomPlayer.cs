@@ -21,7 +21,8 @@ public class RoomPlayer : NetworkBehaviour
             btn.onClick.AddListener(ToggleIsReadyServerRpc);
         }
         background.color = notReadyColor;
-        UpdateNameServerRPC($"{SteamClient.Name} (Not Ready)");
+        string steamName = SteamClient.IsValid ? SteamClient.Name : $"Player {OwnerClientId + 1}";
+        UpdateNameServerRpc($"{steamName} (Not Ready)");
         Debug.Log("Room Player Created!");
     }
 
@@ -40,17 +41,19 @@ public class RoomPlayer : NetworkBehaviour
         background.color = newIsReady ? readyColor : notReadyColor;
         if (!IsOwner) return;
         string readyText = newIsReady ? "Ready" : "Not Ready";
-        UpdateNameServerRPC($"{SteamClient.Name} ({readyText})");
+        string steamName = SteamClient.IsValid ? SteamClient.Name : $"Player {OwnerClientId + 1}";
+        UpdateNameServerRpc($"{steamName} ({readyText})");
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     public void ToggleIsReadyServerRpc()
     {
+        if (!IsOwner) return;
         isReady.Value = !isReady.Value;
     }
 
-    [ServerRpc]
-    public void UpdateNameServerRPC(string updatedName)
+    [ServerRpc(RequireOwnership = false)]
+    public void UpdateNameServerRpc(string updatedName)
     {
         UpdateNameClientRpc(updatedName);
     }
