@@ -22,7 +22,7 @@ public class LobbyManager : MonoBehaviour
     [SerializeField] GameObject generalLobbyScreen;
     // [SerializeField] GameObject createNewLobbyScreen;
     // [SerializeField] GameObject roomScreen;
-    [SerializeField] private RoomManager currentRoom;
+    [SerializeField] GameObject currentRoom;
     [Header("Scroll Content")]
     [SerializeField] Transform joinableRoomsContent;
     [Header("Prefabs Content")]
@@ -35,7 +35,10 @@ public class LobbyManager : MonoBehaviour
     private LobbyState currentLobbyState = LobbyState.PublicLobby;
 
     private LogLevel LogLevel => NetworkManager.Singleton ? NetworkManager.Singleton.LogLevel : LogLevel.Nothing;
-
+    private void DeveloperLog(string msg)
+    {
+        if (LogLevel <= LogLevel.Developer) Debug.Log($"[{nameof(LobbyManager)}] {msg}");
+    }
     void Start()
     {
         ShowLobbyScreen(LobbyState.PublicLobby);
@@ -71,19 +74,22 @@ public class LobbyManager : MonoBehaviour
         currentLobbyState = newLobby ?? currentLobbyState;
         generalLobbyScreen.SetActive(currentLobbyState == LobbyState.PublicLobby);
         // createNewLobbyScreen.SetActive(currentLobbyState == LobbyState.CreatingNew);
-        if (currentRoom) currentRoom.gameObject.SetActive(currentLobbyState == LobbyState.PrivateRoom);
-        RunSelectRefresh();
+        currentRoom.SetActive(currentLobbyState == LobbyState.PrivateRoom);
+        if (currentLobbyState == LobbyState.PublicLobby)
+        {
+            RefreshServerList();
+        }
     }
 
     public void StartHost() => TryStartHost();
 
     public bool TryStartHost()
     {
-        Debug.Log("Trying to host game.");
+        DeveloperLog("Trying to host game.");
         bool successfullyStarted = NetworkManager.Singleton && NetworkManager.Singleton.StartHost();
-        if (LogLevel <= LogLevel.Normal && successfullyStarted)
+        if (successfullyStarted)
         {
-            Debug.Log("Host was able to start!");
+            DeveloperLog("Host was able to start!");
             // Currently go immideately to room, rather than lobby settings creation
         }
         else if (LogLevel <= LogLevel.Error && !successfullyStarted)
@@ -93,17 +99,28 @@ public class LobbyManager : MonoBehaviour
         return successfullyStarted;
     }
 
+    public void StartClient() => TryStartClient();
+    public bool TryStartClient()
+    {
+        DeveloperLog("Trying to join game.");
+        bool successfullyStarted = NetworkManager.Singleton && NetworkManager.Singleton.StartClient();
+        if (successfullyStarted)
+        {
+            DeveloperLog("Client was able to join game!");
+            ShowLobbyScreen(LobbyState.PrivateRoom);
+        }
+        else if (LogLevel <= LogLevel.Error && !successfullyStarted)
+        {
+            Debug.LogError("Could not join as client!");
+        }
+        return successfullyStarted;
+    }
+
     public void LeaveGame()
     {
-        Debug.Log("Trying to leave game.");
+        DeveloperLog("Trying to leave game.");
         if (NetworkManager.Singleton)
         {
-            if (currentRoom != null)
-            {
-
-                Destroy(currentRoom.gameObject);
-                currentRoom = null;
-            }
             NetworkManager.Singleton.Shutdown();
             ShowLobbyScreen(LobbyState.PublicLobby);
         }
@@ -115,20 +132,20 @@ public class LobbyManager : MonoBehaviour
 
     private void ClientEntered(ulong clientId)
     {
-        if (LogLevel <= LogLevel.Normal) Debug.Log($"Client {clientId} has started!");
+        DeveloperLog($"Client {clientId} has started!");
         if (NetworkManager.Singleton.LocalClientId == clientId)
         {
             ShowLobbyScreen(LobbyState.PrivateRoom);
         }
-        else if (NetworkManager.Singleton.IsHost && currentRoom)
-        {
-            currentRoom.RefreshPlayersInRoom();
-        }
+        // else if (NetworkManager.Singleton.IsHost)
+        // {
+        //     StartCoroutine(RunRefresh());
+        // }
     }
 
     private void ServerStarted()
     {
-        if (LogLevel <= LogLevel.Normal) Debug.Log("Server has started!");
+        DeveloperLog("Server has started!");
         // Create a room manager
         // GameObject roomManagerObject = new("Room Manager");
         // currentRoom = roomManagerObject.AddComponent<RoomManager>();
@@ -138,37 +155,49 @@ public class LobbyManager : MonoBehaviour
         // currentRoom = roomManagerObject.GetComponent<RoomManager>();
         // roomManagerObject.GetComponent<NetworkObject>().Spawn();
 
-        currentRoom.RefreshPlayersInRoom();
-        Debug.Log("Created Current Room Manager!");
+        // currentRoom.RefreshPlayersContent();
+        // Debug.Log("Created Current Room Manager!");
     }
 
     private void ClientExited(ulong clientId)
     {
-        if (LogLevel <= LogLevel.Normal) Debug.Log($"Client {clientId} has left!");
+        DeveloperLog($"Client {clientId} has left!");
         // Show public lobby for person who left
         if (NetworkManager.Singleton.LocalClientId == clientId)
         {
             ShowLobbyScreen(LobbyState.PublicLobby);
         }
-        else if (NetworkManager.Singleton.IsHost && currentRoom)
-        {
-            currentRoom.RefreshPlayersInRoom();
-        }
-
-
+        // else
+        // {
+        //     StartCoroutine(RunRefresh());
+        // }
     }
 
-    public void RunSelectRefresh()
-    {
-        if (currentLobbyState == LobbyState.PublicLobby)
-        {
-            RefreshServerList();
-        }
-        else if (currentLobbyState == LobbyState.PrivateRoom && NetworkManager.Singleton.IsHost && currentRoom)
-        {
-            currentRoom.RefreshPlayersInRoom();
-        }
-    }
+    // private IEnumerator RunRefresh()
+    // {
+    //     while (!currentRoom.IsSpawned)
+    //     {
+    //         yield return new WaitForSeconds(0.1f);
+    //     }
+    //     currentRoom.RefreshPlayerContentServerRPC();
+    // }
+
+    // public void RunSelectRefresh()
+    // {
+    //     if (!NetworkManager.Singleton.IsConnectedClient)
+    //     {
+    //         return;
+    //     }
+    //     else if (currentLobbyState == LobbyState.PublicLobby)
+    //     {
+    //         RefreshServerList();
+    //     }
+    //     else if (currentLobbyState == LobbyState.PrivateRoom)
+    //     {
+    //         StartCoroutine(RunRefresh());
+    //         // currentRoom.RefreshPlayersContent();
+    //     }
+    // }
 
     public void RefreshServerList()
     {
@@ -213,9 +242,9 @@ public class LobbyManager : MonoBehaviour
             NetworkManager.Singleton.OnClientDisconnectCallback += ClientExited;
             NetworkManager.Singleton.OnServerStarted += ServerStarted;
             if (hostGame) hostGame.SetActive(true);
-            Debug.Log("Network Callbacks assigned!");
+            DeveloperLog("Network Callbacks assigned!");
         }
-        else
+        else if (LogLevel <= LogLevel.Error)
         {
             Debug.LogError("Network Manger Singleton could not be found!");
         }
