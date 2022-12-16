@@ -24,27 +24,9 @@ public class RoomPlayer : NetworkBehaviour
     {
         base.OnNetworkSpawn();
         isReady.OnValueChanged += OnReadyChange;
-        // if (GetComponent<Button>() is Button btn)
-        // {
-        //     readyButton = btn;
-        // }
-        // Debug.LogWarning("Starting to run Refresh Room Manager");
         StartCoroutine(RefreshRoomManager());
-        // UpdateButton();
         DeveloperLog($"Room Player for Client {OwnerClientId} Created!");
     }
-
-    // private void UpdateButton(bool willAddListener = true)
-    // {
-    //     if (readyButton && willAddListener)
-    //     {
-    //         readyButton.onClick.AddListener(ToggleIsReadyServerRpc);
-    //     }
-    //     background.color = isReady.Value ? readyColor : notReadyColor;
-    //     string readyText = isReady.Value ? "Ready" : "Not Ready";
-    //     string steamName = SteamClient.IsValid ? SteamClient.Name : $"Player {OwnerClientId + 1}";
-    //     UpdateNameServerRpc($"{steamName} ({readyText})");
-    // }
 
     [ServerRpc(RequireOwnership = false)]
     public void NewButtonServerRpc()
@@ -76,7 +58,6 @@ public class RoomPlayer : NetworkBehaviour
             if (NetworkManager.LogLevel <= LogLevel.Error) Debug.LogError("Button could not be created, prefab has no button component!");
             Destroy(newButtonGo);
         }
-        // DeveloperLog($"client {this.OwnerClientId}: is owner? {IsOwner}, is local? {IsLocalPlayer}");
         DeveloperLog($"Add listener for client {this.OwnerClientId}");
         readyButton.onClick.AddListener(ToggleIsReady);
         Debug.LogWarning($"Button listeners: {readyButton.onClick.GetPersistentEventCount()}");
@@ -104,37 +85,12 @@ public class RoomPlayer : NetworkBehaviour
         base.OnNetworkDespawn();
         isReady.OnValueChanged -= OnReadyChange;
         RemoveButtonServerRpc();
-        // roomManager.RefreshPlayerContentServerRPC();
     }
-
-    // public void UpdateButtonRef(Button newButton, bool willAddListener = true)
-    // {
-    //     if (readyButton)
-    //     {
-    //         readyButton.onClick.RemoveAllListeners();
-    //         readyButton = null;
-    //     }
-    //     readyButton = newButton;
-    //     background = readyButton.GetComponent<Image>();
-    //     playerName = readyButton.GetComponentInChildren<TMP_Text>();
-    //     UpdateButton(willAddListener);
-    // }
-
-    // [ServerRpc]
-    // public void AddNewButtonServerRpc()
-    // {
-    //     if (roomManager)
-    //     {
-    //         GameObject newButton = Instantiate(roomManager.ButtonPrefab, roomManager.PlayersInRoomContent);
-
-    //     }
-    // }
 
     private void OnReadyChange(bool previousIsReady, bool newIsReady)
     {
         if (!IsOwner) return;
         DeveloperLog($"Client {OwnerClientId}'s is ready has changed from {previousIsReady} to {newIsReady}!");
-        // roomManager.RefreshPlayerContentServerRPC();
         UpdateButton();
     }
 
@@ -187,15 +143,5 @@ public class RoomPlayer : NetworkBehaviour
             yield return new WaitForSeconds(0.2f);
         }
         NewButtonServerRpc();
-        // if (IsOwner)
-        // {
-        //     DeveloperLog($"Room manager is spawned, adding button");
-        //     NewButtonServerRpc();
-        // }
-        // else
-        // {
-        //     NewButtonServerRpc();
-        // }
-        // roomManager.RefreshPlayerContentServerRPC();
     }
 }

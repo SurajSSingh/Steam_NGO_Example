@@ -20,8 +20,6 @@ public class LobbyManager : MonoBehaviour
     private const int WAIT_TIMEOUT = 60;
     [Header("Lobby Screens")]
     [SerializeField] GameObject generalLobbyScreen;
-    // [SerializeField] GameObject createNewLobbyScreen;
-    // [SerializeField] GameObject roomScreen;
     [SerializeField] GameObject currentRoom;
     [Header("Scroll Content")]
     [SerializeField] Transform joinableRoomsContent;
@@ -31,7 +29,6 @@ public class LobbyManager : MonoBehaviour
 
     [Header("Other UI")]
     [SerializeField] GameObject hostGame;
-    // [SerializeField] GameObject readyButton;
     private LobbyState currentLobbyState = LobbyState.PublicLobby;
 
     private LogLevel LogLevel => NetworkManager.Singleton ? NetworkManager.Singleton.LogLevel : LogLevel.Nothing;
@@ -146,17 +143,6 @@ public class LobbyManager : MonoBehaviour
     private void ServerStarted()
     {
         DeveloperLog("Server has started!");
-        // Create a room manager
-        // GameObject roomManagerObject = new("Room Manager");
-        // currentRoom = roomManagerObject.AddComponent<RoomManager>();
-        // roomManagerObject.AddComponent<NetworkObject>().Spawn();
-        // Clone a room manager
-        // GameObject roomManagerObject = Instantiate(roomManagerPrefab);
-        // currentRoom = roomManagerObject.GetComponent<RoomManager>();
-        // roomManagerObject.GetComponent<NetworkObject>().Spawn();
-
-        // currentRoom.RefreshPlayersContent();
-        // Debug.Log("Created Current Room Manager!");
     }
 
     private void ClientExited(ulong clientId)
@@ -167,37 +153,7 @@ public class LobbyManager : MonoBehaviour
         {
             ShowLobbyScreen(LobbyState.PublicLobby);
         }
-        // else
-        // {
-        //     StartCoroutine(RunRefresh());
-        // }
     }
-
-    // private IEnumerator RunRefresh()
-    // {
-    //     while (!currentRoom.IsSpawned)
-    //     {
-    //         yield return new WaitForSeconds(0.1f);
-    //     }
-    //     currentRoom.RefreshPlayerContentServerRPC();
-    // }
-
-    // public void RunSelectRefresh()
-    // {
-    //     if (!NetworkManager.Singleton.IsConnectedClient)
-    //     {
-    //         return;
-    //     }
-    //     else if (currentLobbyState == LobbyState.PublicLobby)
-    //     {
-    //         RefreshServerList();
-    //     }
-    //     else if (currentLobbyState == LobbyState.PrivateRoom)
-    //     {
-    //         StartCoroutine(RunRefresh());
-    //         // currentRoom.RefreshPlayersContent();
-    //     }
-    // }
 
     public void RefreshServerList()
     {
@@ -237,7 +193,6 @@ public class LobbyManager : MonoBehaviour
         }
         if (NetworkManager.Singleton)
         {
-            // SteamNetworkingSockets.OnConnectionStatusChanged += OnConnectionChange;
             NetworkManager.Singleton.OnClientConnectedCallback += ClientEntered;
             NetworkManager.Singleton.OnClientDisconnectCallback += ClientExited;
             NetworkManager.Singleton.OnServerStarted += ServerStarted;
@@ -248,11 +203,5 @@ public class LobbyManager : MonoBehaviour
         {
             Debug.LogError("Network Manger Singleton could not be found!");
         }
-    }
-
-    private void OnConnectionChange(Connection connection, ConnectionInfo info)
-    {
-        Debug.Log($"[{nameof(LobbyManager)}: Connection] name = {connection.ConnectionName}, id = {connection.Id}");
-        Debug.Log($"[{nameof(LobbyManager)}: ConnectionInfo] addr = {info.Address}, state = {info.State}, end = {info.EndReason}");
     }
 }
